@@ -3,180 +3,128 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Audio Diffuser — Web Audio (Blue Theme)</title>
-<style>
-:root{
-  --bg-color: #0a0a0f;
-  --surface-color: #151516;
-  --primary-text-color: #e8eef8;
-  --secondary-text-color: #9aa3b6;
-  --border-color: rgba(255,255,255,0.04);
-  --accent-color: #007bff; /* blue accent chosen */
-  --interactive-bg: #1e1f23;
-  --interactive-hover: #2a2b30;
-  --border-radius: 10px;
-  --transition-speed: 0.18s;
-  --glass: rgba(255,255,255,0.02);
-  --muted: #98a0b3;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{
-  background: radial-gradient(1200px 600px at 10% 10%, rgba(0,123,255,0.02) 0%, transparent 10%),
-              linear-gradient(180deg,#061026 0%, #071026 100%);
-  color:var(--primary-text-color);
-  -webkit-font-smoothing:antialiased;
-  padding:22px;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  min-height:100vh;
-  gap:18px;
-}
-.container{width:100%;max-width:1100px;}
-.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
-.brand{display:flex;gap:12px;align-items:center;}
-.logo{width:44px;height:44px;border-radius:10px;background: linear-gradient(135deg, rgba(0,123,255,0.18), rgba(0,123,255,0.06));display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.03);box-shadow: 0 6px 20px rgba(2,6,23,0.6);color:var(--accent-color);font-weight:700;}
-.title{font-size:1.1rem;font-weight:700;letter-spacing:0.4px;}
-.subtitle{font-size:0.86rem;color:var(--secondary-text-color);margin-top:2px}
-.app{display:grid;grid-template-columns:1fr 360px;gap:18px;}
-@media(max-width:980px){.app{grid-template-columns:1fr}}
-.card{background:var(--surface-color);border:1px solid var(--border-color);border-radius:var(--border-radius);padding:16px;box-shadow:0 6px 20px rgba(2,6,23,0.45);}
-.card h3{font-size:0.92rem;color:var(--secondary-text-color);margin-bottom:10px;font-weight:600}
-.controls{display:flex;flex-direction:column;gap:12px}
-.row{display:flex;gap:10px;align-items:center}
-.label{font-size:13px;color:var(--secondary-text-color);margin-bottom:6px}
-.small{padding:8px;border-radius:8px;background:var(--glass);border:1px solid rgba(255,255,255,0.02);color:inherit}
-.file-input-label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px;border-radius:10px;background:#0d0f14;border:1px solid rgba(255,255,255,0.02);cursor:pointer;}
-.file-input-label:hover{border-color: rgba(0,123,255,0.12)}
-.file-input-label .file-title{font-weight:600;font-size:0.95rem}
-.file-input-label .file-sub{font-size:0.82rem;color:var(--secondary-text-color)}
-select, input[type="range"], button{font-family:inherit}
-select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:#0f1116;color:var(--primary-text-color);appearance:none;background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px;}
-input[type="range"]{ -webkit-appearance:none; appearance:none; width:100%; height:6px; background:#111; border-radius:6px; outline:none }
-input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; width:16px;height:16px;border-radius:50%; background:var(--primary-text-color); cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.6) }
-.val{min-width:46px;text-align:right;color:var(--muted);font-size:13px}
-.row-buttons{display:flex;gap:10px;flex-wrap:wrap}
-.btn{background:var(--interactive-bg);border:1px solid var(--border-color);padding:10px 12px;border-radius:10px;color:var(--primary-text-color);cursor:pointer;transition:all var(--transition-speed);}
-.btn:hover{transform:translateY(-2px)}
-.btn-primary{background: linear-gradient(90deg,var(--accent-color), #5ab0ff);color:#032018;font-weight:700;border:none;box-shadow:0 8px 24px rgba(0,123,255,0.08);}
-.preview-panel{display:flex;flex-direction:column;gap:12px;align-items:stretch}
-.audio-player{width:100%;background:#07070a;border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
-.alg-list{height:220px;overflow:auto;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
-.alg-item{padding:8px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px}
-.alg-item.active{background:rgba(0,123,255,0.08);border-left:3px solid var(--accent-color);color:var(--primary-text-color)}
-.waveform-wrapper{background:#05060a;border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
-.canvas{width:100%;height:90px;background:transparent;display:block}
-.footer{display:flex;justify-content:space-between;align-items:center;color:var(--secondary-text-color);font-size:13px;margin-top:6px}
-kbd{background:#07122a;padding:4px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);font-family:monospace}
-.note{color:var(--secondary-text-color);font-size:13px;margin-top:6px}
-@media(max-width:520px){.file-input-label{padding:12px}.app{grid-template-columns:1fr}}
-</style>
+<title>Audio Diffuser — Web Audio</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <div class="brand">
-        <div class="logo">AD</div>
-        <div>
-          <div class="title">Audio Diffuser</div>
-          <div class="subtitle">Upload · Warp · Preview — WebAudio powered</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <button id="nextSmall" class="btn" title="Create a variation">Variation</button>
-        <button id="downloadSmall" class="btn" title="Download current output">Download</button>
-      </div>
-    </div>
+    <header>
+        <h1>Audio Diffuser</h1>
+        <p class="subtitle">Upload · Warp · Preview — WebAudio powered</p>
+    </header>
 
-    <div class="app">
-      <!-- LEFT: controls -->
-      <div class="card">
-        <h3>Upload & Controls</h3>
-        <div class="controls">
-
-          <label class="file-input-label" for="file">
-            <div class="file-title">Click to upload WAV / MP3</div>
-            <div class="file-sub" id="fileName">No file selected</div>
-            <input id="file" type="file" accept="audio/*" style="display:none">
-          </label>
-
-          <div>
-            <div class="label">Algorithm</div>
-            <select id="alg" class="small">
-              <option>Spectral smudge</option>
-              <option>Micro-granular shuffle</option>
-              <option>Chaotic waveshaper</option>
-              <option>Binaural phase mod</option>
-              <option>Mirror clip</option>
-              <option>Granular decay</option>
-              <option>Pitch bend chaos</option>
-              <option>Reverse reverb</option>
-              <option>Evolving bit-crush</option>
-              <option>Flutter tremolo</option>
-            </select>
+    <main>
+      <!-- LEFT COLUMN: CONTROLS -->
+      <div class="main-col">
+        <div class="card" id="controls-container">
+          <div class="card-header">
+            <h2>CONTROLS</h2>
           </div>
+          <div class="card-content">
 
-          <div>
-            <div class="label">Intensity <span id="intv" class="val">0.50</span></div>
-            <div class="row">
-              <input id="int" type="range" min="0" max="1" step="0.01" value="0.5">
+            <div class="control-group">
+                <div class="upload-area-wrapper">
+                    <label class="file-input-label" for="file">
+                        <div class="file-label-title">Click to upload WAV / MP3</div>
+                        <div id="fileName" class="file-name">No file selected</div>
+                        <input id="file" type="file" accept="audio/*">
+                    </label>
+                </div>
+            </div>
+
+            <div class="control-group">
+              <label for="alg">Algorithm</label>
+              <select id="alg">
+                <option>Spectral smudge</option>
+                <option>Micro-granular shuffle</option>
+                <option>Chaotic waveshaper</option>
+                <option>Binaural phase mod</option>
+                <option>Mirror clip</option>
+                <option>Granular decay</option>
+                <option>Pitch bend chaos</option>
+                <option>Reverse reverb</option>
+                <option>Evolving bit-crush</option>
+                <option>Flutter tremolo</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label>Intensity <span id="intv">0.50</span></label>
+              <div class="slider-wrapper">
+                <span class="slider-label">0.0</span>
+                <input id="int" type="range" min="0" max="1" step="0.01" value="0.5">
+                <span class="slider-label">1.0</span>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label>Chaos (randomness) <span id="chaosv">0.50</span></label>
+              <div class="slider-wrapper">
+                <span class="slider-label">0.0</span>
+                <input id="chaos" type="range" min="0" max="1" step="0.01" value="0.5">
+                <span class="slider-label">1.0</span>
+              </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="checkbox-label">
+                    <input id="undef" type="checkbox"> Undefuse mode (partial reverse)
+                </label>
+                <label class="checkbox-label">
+                    <input id="loopToggle" type="checkbox"> Download as loop (crossfade)
+                </label>
+            </div>
+
+            <div class="action-buttons">
+              <button id="diffuse" class="btn btn-primary">Diffuse</button>
+              <button id="previewBtn" class="btn">Preview</button>
+              <button id="next" class="btn">Next</button>
+              <button id="download" class="btn">Download</button>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div>
-            <div class="label">Chaos (randomness) <span id="chaosv" class="val">0.50</span></div>
-            <div class="row">
-              <input id="chaos" type="range" min="0" max="1" step="0.01" value="0.5">
+      <!-- RIGHT COLUMN: PREVIEW & VISUALIZATION -->
+      <div class="main-col">
+        <div class="card">
+            <div class="card-header">
+                <h2>PREVIEW</h2>
             </div>
-          </div>
+            <div class="card-content">
+                <audio id="player" controls style="width:100%"></audio>
+                <div style="display:flex; justify-content: space-between; font-size: 0.8em; color: var(--secondary-text-color); margin-top: 1rem;">
+                    <div>Seed: <span id="seed">-</span></div>
+                    <div>WebAudio</div>
+                </div>
+            </div>
+        </div>
 
-          <div class="row">
-            <label class="checkbox-label"><input id="undef" type="checkbox"> Undefuse mode (partial reverse)</label>
-          </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>ALGORITHM QUICK LIST</h2>
+            </div>
+            <div class="card-content">
+                 <div class="flip-container">
+                    <button id="flipBtn" title="Shuffle list">
+                        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                    </button>
+                </div>
+                <div class="alg-list" id="algList" style="height: 220px; overflow-y: auto; margin-top: 1rem;"></div>
+            </div>
+        </div>
 
-          <div class="row">
-            <label class="checkbox-label"><input id="loopToggle" type="checkbox"> Download as loop (crossfade)</label>
-          </div>
-
-          <div class="row-buttons" style="margin-top:6px">
-            <button id="diffuse" class="btn btn-primary">Diffuse</button>
-            <button id="previewBtn" class="btn">Preview</button>
-            <button id="next" class="btn">Next</button>
-            <button id="download" class="btn">Download</button>
-          </div>
-
-          <div class="note">Tip: adjust intensity & chaos during live preview for evolving results. Keyboard: <kbd>Space</kbd> toggles play.</div>
+        <div class="waveform-container card">
+            <div class="waveform-header">
+                <h3>Playback Visualization</h3>
+            </div>
+            <div class="canvas-wrapper">
+                 <div class="playhead"></div>
+                 <canvas id="wave"></canvas>
+            </div>
         </div>
       </div>
-
-      <!-- RIGHT: preview -->
-      <div class="card preview-panel">
-        <h3>Preview Player</h3>
-
-        <div class="audio-player">
-          <audio id="player" controls style="width:100%;display:block"></audio>
-          <div class="footer" style="margin-top:8px">
-            <div>Seed: <span id="seed">-</span></div>
-            <div><kbd>WebAudio</kbd></div>
-          </div>
-        </div>
-
-        <div class="waveform-wrapper card" style="padding:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-weight:600;color:var(--secondary-text-color)">Algorithm quick list</div>
-            <button id="flipBtn" title="Shuffle list" class="btn" style="padding:8px;border-radius:8px">Shuffle</button>
-          </div>
-          <div class="alg-list" id="algList"></div>
-        </div>
-
-        <div class="card" style="padding:12px">
-          <div class="label">Playback visualization</div>
-          <canvas id="wave" class="canvas"></canvas>
-        </div>
-      </div>
-    </div>
+    </main>
   </div>
 
 <script>
@@ -190,8 +138,7 @@ const fileInput = document.getElementById('file'), alg = document.getElementById
       player=document.getElementById('player'), undef=document.getElementById('undef'),
       loopToggle=document.getElementById('loopToggle'), seedLabel=document.getElementById('seed'),
       fileNameLabel=document.getElementById('fileName'), algListEl=document.getElementById('algList'),
-      flipBtn=document.getElementById('flipBtn'), nextSmall=document.getElementById('nextSmall'),
-      downloadSmall=document.getElementById('downloadSmall');
+      flipBtn=document.getElementById('flipBtn');
 
 const algList = ["Spectral smudge","Micro-granular shuffle","Chaotic waveshaper","Binaural phase mod","Mirror clip","Granular decay","Pitch bend chaos","Reverse reverb","Evolving bit-crush","Flutter tremolo"];
 
@@ -208,11 +155,26 @@ function refreshAlgList(){
     const d = document.createElement('div');
     d.textContent = a;
     d.className = 'alg-item' + (alg.selectedIndex===i ? ' active' : '');
+    // Simple styling for alg-item as it's not in the CSS
+    d.style.padding = '8px';
+    d.style.borderRadius = '4px';
+    d.style.cursor = 'pointer';
+    d.style.color = 'var(--secondary-text-color)';
+    if (alg.selectedIndex === i) {
+        d.style.background = 'rgba(0,123,255,0.1)';
+        d.style.color = 'var(--primary-text-color)';
+    }
     d.onclick = ()=>{ alg.selectedIndex = i; highlightAlg(); };
     algListEl.appendChild(d);
   });
 }
-function highlightAlg(){ const items = document.querySelectorAll('.alg-item'); items.forEach((it,i)=>{it.classList.toggle('active', alg.selectedIndex===i)}); }
+function highlightAlg(){ 
+    const items = document.querySelectorAll('.alg-item'); 
+    items.forEach((it,i)=>{
+        it.style.background = (alg.selectedIndex===i) ? 'rgba(0,123,255,0.1)' : 'transparent';
+        it.style.color = (alg.selectedIndex===i) ? 'var(--primary-text-color)' : 'var(--secondary-text-color)';
+    });
+}
 refreshAlgList();
 
 /* file load */
@@ -565,9 +527,8 @@ function playBuffer(buf){
 previewBtn.onclick = async ()=>{ if(!processedBuffer) await diffuse(true); else playBuffer(processedBuffer); }
 diffBtn.onclick = async ()=>{ await diffuse(false); alert('Diffuse applied. Use Preview for live playback or Next for variations.'); }
 nextBtn.onclick = async ()=>{ if(!originalBuffer) return alert("Upload a file first."); currentSeed = (currentSeed + Math.floor(Math.random()*9999)+1) % 2147483647; seedLabel.textContent = currentSeed; processedBuffer = applyAlgorithm(originalBuffer, alg.value, parseFloat(int.value), parseFloat(chaos.value), currentSeed, undef.checked); playBuffer(processedBuffer); }
-nextSmall.onclick = ()=>nextBtn.click();
+
 downloadBtn.onclick = ()=>downloadCurrent();
-downloadSmall.onclick = ()=>downloadCurrent();
 
 function downloadCurrent(){
   const buf = processedBuffer || originalBuffer;
@@ -640,27 +601,38 @@ flipBtn.onclick = ()=>{
 
 /* waveform drawing (simple) */
 const canvas = document.getElementById('wave'), ctx = canvas.getContext('2d');
-function resizeCanvas(){ canvas.width = canvas.clientWidth * devicePixelRatio; canvas.height = canvas.clientHeight * devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); drawEmptyWave(); }
-function drawEmptyWave(){ ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight); ctx.fillStyle = '#04060a'; ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight); ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fillRect(0,canvas.clientHeight/2,canvas.clientWidth,1); }
-window.addEventListener('resize', ()=>{ resizeCanvas(); });
+function resizeCanvas(){ 
+    canvas.width = canvas.clientWidth; 
+    canvas.height = canvas.clientHeight; 
+    drawEmptyWave(); 
+}
+function drawEmptyWave(){ 
+    ctx.clearRect(0,0,canvas.width,canvas.height); 
+    ctx.fillStyle = '#111'; 
+    ctx.fillRect(0,0,canvas.width,canvas.height); 
+    ctx.fillStyle = 'rgba(255,255,255,0.1)'; 
+    ctx.fillRect(0,canvas.height/2,canvas.width,1); 
+}
+window.addEventListener('resize', ()=>{ resizeCanvas(); if(processedBuffer || originalBuffer) drawWaveformFromBuffer(processedBuffer || originalBuffer); });
 resizeCanvas();
 
 function drawWaveformFromBuffer(buf){
   if(!buf) return;
   const raw = buf.getChannelData(0);
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  const step = Math.max(1, Math.floor(raw.length / w));
-  ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
-  ctx.fillStyle = '#04060a';
-  ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
-  ctx.lineWidth = 1.6;
+  const w = canvas.width, h = canvas.height;
+  const step = Math.ceil(raw.length / w);
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0,0,w,h);
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'var(--accent-color)';
   ctx.beginPath();
-  ctx.strokeStyle = 'rgba(0,123,255,0.95)';
   const mid = h/2;
-  for(let x=0, i=0; x<w && i<raw.length; x++, i+=step){
+  for(let i=0; i<raw.length; i+=step){
+    const x = Math.floor( (i/raw.length) * w );
     const v = raw[i];
-    const y = mid + v * mid * 0.95;
-    if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    const y = mid + v * mid;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   }
   ctx.stroke();
 }
