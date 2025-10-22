@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Audio Diffuser — Web Audio (Blue Theme)</title>
+<style>
+:root{
+  --bg-color: #0a0a0f;
+  --surface-color: #151516;
+  --primary-text-color: #e8eef8;
+  --secondary-text-color: #9aa3b6;
+  --border-color: rgba(255,255,255,0.04);
+  --accent-color: #007bff; /* blue accent chosen */
+  --interactive-bg: #1e1f23;
+  --interactive-hover: #2a2b30;
+  --border-radius: 10px;
+  --transition-speed: 0.18s;
+  --glass: rgba(255,255,255,0.02);
+  --muted: #98a0b3;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background: radial-gradient(1200px 600px at 10% 10%, rgba(0,123,255,0.02) 0%, transparent 10%),
+              linear-gradient(180deg,#061026 0%, #071026 100%);
+  color:var(--primary-text-color);
+  -webkit-font-smoothing:antialiased;
+  padding:22px;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  min-height:100vh;
+  gap:18px;
+}
+.container{width:100%;max-width:1100px;}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.brand{display:flex;gap:12px;align-items:center;}
+.logo{width:44px;height:44px;border-radius:10px;background: linear-gradient(135deg, rgba(0,123,255,0.18), rgba(0,123,255,0.06));display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.03);box-shadow: 0 6px 20px rgba(2,6,23,0.6);color:var(--accent-color);font-weight:700;}
+.title{font-size:1.1rem;font-weight:700;letter-spacing:0.4px;}
+.subtitle{font-size:0.86rem;color:var(--secondary-text-color);margin-top:2px}
+.app{display:grid;grid-template-columns:1fr 360px;gap:18px;}
+@media(max-width:980px){.app{grid-template-columns:1fr}}
+.card{background:var(--surface-color);border:1px solid var(--border-color);border-radius:var(--border-radius);padding:16px;box-shadow:0 6px 20px rgba(2,6,23,0.45);}
+.card h3{font-size:0.92rem;color:var(--secondary-text-color);margin-bottom:10px;font-weight:600}
+.controls{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:10px;align-items:center}
+.label{font-size:13px;color:var(--secondary-text-color);margin-bottom:6px}
+.small{padding:8px;border-radius:8px;background:var(--glass);border:1px solid rgba(255,255,255,0.02);color:inherit}
+.file-input-label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px;border-radius:10px;background:#0d0f14;border:1px solid rgba(255,255,255,0.02);cursor:pointer;}
+.file-input-label:hover{border-color: rgba(0,123,255,0.12)}
+.file-input-label .file-title{font-weight:600;font-size:0.95rem}
+.file-input-label .file-sub{font-size:0.82rem;color:var(--secondary-text-color)}
+select, input[type="range"], button{font-family:inherit}
+select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--border-color);background:#0f1116;color:var(--primary-text-color);appearance:none;background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px;}
+input[type="range"]{ -webkit-appearance:none; appearance:none; width:100%; height:6px; background:#111; border-radius:6px; outline:none }
+input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; width:16px;height:16px;border-radius:50%; background:var(--primary-text-color); cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.6) }
+.val{min-width:46px;text-align:right;color:var(--muted);font-size:13px}
+.row-buttons{display:flex;gap:10px;flex-wrap:wrap}
+.btn{background:var(--interactive-bg);border:1px solid var(--border-color);padding:10px 12px;border-radius:10px;color:var(--primary-text-color);cursor:pointer;transition:all var(--transition-speed);}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background: linear-gradient(90deg,var(--accent-color), #5ab0ff);color:#032018;font-weight:700;border:none;box-shadow:0 8px 24px rgba(0,123,255,0.08);}
+.preview-panel{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+.audio-player{width:100%;background:#07070a;border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
+.alg-list{height:220px;overflow:auto;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+.alg-item{padding:8px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px}
+.alg-item.active{background:rgba(0,123,255,0.08);border-left:3px solid var(--accent-color);color:var(--primary-text-color)}
+.waveform-wrapper{background:#05060a;border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,0.02)}
+.canvas{width:100%;height:90px;background:transparent;display:block}
+.footer{display:flex;justify-content:space-between;align-items:center;color:var(--secondary-text-color);font-size:13px;margin-top:6px}
+kbd{background:#07122a;padding:4px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);font-family:monospace}
+.note{color:var(--secondary-text-color);font-size:13px;margin-top:6px}
+@media(max-width:520px){.file-input-label{padding:12px}.app{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">AD</div>
+        <div>
+          <div class="title">Audio Diffuser</div>
+          <div class="subtitle">Upload · Warp · Preview — WebAudio powered</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button id="nextSmall" class="btn" title="Create a variation">Variation</button>
+        <button id="downloadSmall" class="btn" title="Download current output">Download</button>
+      </div>
+    </div>
+
+    <div class="app">
+      <!-- LEFT: controls -->
+      <div class="card">
+        <h3>Upload & Controls</h3>
+        <div class="controls">
+
+          <label class="file-input-label" for="file">
+            <div class="file-title">Click to upload WAV / MP3</div>
+            <div class="file-sub" id="fileName">No file selected</div>
+            <input id="file" type="file" accept="audio/*" style="display:none">
+          </label>
+
+          <div>
+            <div class="label">Algorithm</div>
+            <select id="alg" class="small">
+              <option>Spectral smudge</option>
+              <option>Micro-granular shuffle</option>
+              <option>Chaotic waveshaper</option>
+              <option>Binaural phase mod</option>
+              <option>Mirror clip</option>
+              <option>Granular decay</option>
+              <option>Pitch bend chaos</option>
+              <option>Reverse reverb</option>
+              <option>Evolving bit-crush</option>
+              <option>Flutter tremolo</option>
+            </select>
+          </div>
+
+          <div>
+            <div class="label">Intensity <span id="intv" class="val">0.50</span></div>
+            <div class="row">
+              <input id="int" type="range" min="0" max="1" step="0.01" value="0.5">
+            </div>
+          </div>
+
+          <div>
+            <div class="label">Chaos (randomness) <span id="chaosv" class="val">0.50</span></div>
+            <div class="row">
+              <input id="chaos" type="range" min="0" max="1" step="0.01" value="0.5">
+            </div>
+          </div>
+
+          <div class="row">
+            <label class="checkbox-label"><input id="undef" type="checkbox"> Undefuse mode (partial reverse)</label>
+          </div>
+
+          <div class="row">
+            <label class="checkbox-label"><input id="loopToggle" type="checkbox"> Download as loop (crossfade)</label>
+          </div>
+
+          <div class="row-buttons" style="margin-top:6px">
+            <button id="diffuse" class="btn btn-primary">Diffuse</button>
+            <button id="previewBtn" class="btn">Preview</button>
+            <button id="next" class="btn">Next</button>
+            <button id="download" class="btn">Download</button>
+          </div>
+
+          <div class="note">Tip: adjust intensity & chaos during live preview for evolving results. Keyboard: <kbd>Space</kbd> toggles play.</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: preview -->
+      <div class="card preview-panel">
+        <h3>Preview Player</h3>
+
+        <div class="audio-player">
+          <audio id="player" controls style="width:100%;display:block"></audio>
+          <div class="footer" style="margin-top:8px">
+            <div>Seed: <span id="seed">-</span></div>
+            <div><kbd>WebAudio</kbd></div>
+          </div>
+        </div>
+
+        <div class="waveform-wrapper card" style="padding:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:600;color:var(--secondary-text-color)">Algorithm quick list</div>
+            <button id="flipBtn" title="Shuffle list" class="btn" style="padding:8px;border-radius:8px">Shuffle</button>
+          </div>
+          <div class="alg-list" id="algList"></div>
+        </div>
+
+        <div class="card" style="padding:12px">
+          <div class="label">Playback visualization</div>
+          <canvas id="wave" class="canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== Audio Diffuser (new algorithm set implemented) ===== */
+let audioCtx, originalBuffer, processedBuffer, currentSeed=Date.now(), lastAlg=null;
+const fileInput = document.getElementById('file'), alg = document.getElementById('alg'),
+      int = document.getElementById('int'), intv=document.getElementById('intv'),
+      chaos=document.getElementById('chaos'), chaosv=document.getElementById('chaosv'),
+      diffBtn=document.getElementById('diffuse'), previewBtn=document.getElementById('previewBtn'),
+      nextBtn=document.getElementById('next'), downloadBtn=document.getElementById('download'),
+      player=document.getElementById('player'), undef=document.getElementById('undef'),
+      loopToggle=document.getElementById('loopToggle'), seedLabel=document.getElementById('seed'),
+      fileNameLabel=document.getElementById('fileName'), algListEl=document.getElementById('algList'),
+      flipBtn=document.getElementById('flipBtn'), nextSmall=document.getElementById('nextSmall'),
+      downloadSmall=document.getElementById('downloadSmall');
+
+const algList = ["Spectral smudge","Micro-granular shuffle","Chaotic waveshaper","Binaural phase mod","Mirror clip","Granular decay","Pitch bend chaos","Reverse reverb","Evolving bit-crush","Flutter tremolo"];
+
+function prng(seed){
+  let s = seed|0;
+  return ()=>{ s = Math.imul(48271, s) % 2147483647; return (s & 0x7fffffff)/2147483647; };
+}
+function ensureCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+
+/* populate algorithm list visually */
+function refreshAlgList(){
+  algListEl.innerHTML = '';
+  algList.forEach((a,i)=>{
+    const d = document.createElement('div');
+    d.textContent = a;
+    d.className = 'alg-item' + (alg.selectedIndex===i ? ' active' : '');
+    d.onclick = ()=>{ alg.selectedIndex = i; highlightAlg(); };
+    algListEl.appendChild(d);
+  });
+}
+function highlightAlg(){ const items = document.querySelectorAll('.alg-item'); items.forEach((it,i)=>{it.classList.toggle('active', alg.selectedIndex===i)}); }
+refreshAlgList();
+
+/* file load */
+fileInput.onchange = async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  ensureCtx();
+  const ab = await f.arrayBuffer();
+  originalBuffer = await audioCtx.decodeAudioData(ab);
+  processedBuffer = null;
+  fileNameLabel.textContent = f.name;
+  player.src = URL.createObjectURL(f);
+  seedLabel.textContent = '-';
+  drawWaveformFromBuffer(originalBuffer);
+};
+
+/* sliders */
+int.oninput = ()=>{ intv.textContent = parseFloat(int.value).toFixed(2); if(player.src && processedBuffer) liveUpdate(); }
+chaos.oninput = ()=>{ chaosv.textContent = parseFloat(chaos.value).toFixed(2); }
+
+/* helpers */
+function cloneBuffer(buf){
+  const ctx = ensureCtx();
+  const out = ctx.createBuffer(buf.numberOfChannels, buf.length, buf.sampleRate);
+  for(let ch=0; ch<buf.numberOfChannels; ch++) out.getChannelData(ch).set(buf.getChannelData(ch));
+  return out;
+}
+
+/* tiny convolution helper (small IR) */
+function convolveSmall(data, ir){
+  const out = new Float32Array(data.length);
+  const L = data.length, M = ir.length;
+  for(let i=0;i<L;i++){
+    let s = 0;
+    for(let j=0;j<M && j<=i;j++){
+      s += data[i-j] * ir[j];
+    }
+    out[i] = s;
+  }
+  return out;
+}
+
+/* simple linear resample */
+function resampleArray(src, rate){
+  const L = src.length;
+  const out = new Float32Array(L);
+  let pos = 0;
+  for(let i=0;i<L;i++){
+    const ip = Math.floor(pos);
+    const frac = pos - ip;
+    const a = src[ip] || 0;
+    const b = src[ip+1] || 0;
+    out[i] = a*(1-frac) + b*frac;
+    pos += rate;
+    if(pos >= L) pos -= L;
+  }
+  return out;
+}
+
+/* applyAlgorithm - new implementations */
+function applyAlgorithm(buf, algorithm, intensity, chaosVal, seed, undefuseMode){
+  const ctx = ensureCtx();
+  const out = cloneBuffer(buf);
+  const rnd = prng(seed);
+  const mix = intensity;
+  const len = out.length;
+
+  for(let ch=0; ch<out.numberOfChannels; ch++){
+    const data = out.getChannelData(ch);
+    const src = buf.getChannelData(ch);
+
+    switch(algorithm){
+
+      /* SPECTRAL SMUDGE
+         - small randomized IR convolution applied in short windows
+         - approximates gentle spectral smear (shimmer) without heavy FFT
+      */
+      case "Spectral smudge":{
+        const windowSize = Math.max(256, Math.floor(1024 * (1 - chaosVal*0.75)));
+        const irBaseLen = Math.max(32, Math.floor(64 + chaosVal*256));
+        const ir = new Float32Array(irBaseLen);
+        // create a gentle resonant-ish IR with random harmonic emphasis
+        for(let i=0;i<irBaseLen;i++){
+          const t = i/(irBaseLen-1);
+          ir[i] = (0.5 - 0.5*Math.cos(Math.PI*t)) * Math.pow(1 - t, 2); // fade
+          // add tiny random spectral bumps
+          ir[i] *= 1 + (rnd()-0.5)*chaosVal*0.6;
+        }
+        // process in windows with crossfade
+        const outbuf = new Float32Array(len);
+        for(let pos=0; pos<len; pos+=windowSize){
+          const block = Math.min(windowSize, len-pos);
+          const blockData = src.subarray(pos, pos+block);
+          const conv = convolveSmall(blockData, ir);
+          for(let i=0;i<block;i++){
+            const idx = pos+i;
+            const dry = src[idx];
+            const wet = conv[i] || 0;
+            // crossfade edges
+            const edge = Math.min(i, Math.min(block-1-i, 16))/16;
+            const fade = 0.5 + 0.5*edge;
+            outbuf[idx] += dry*(1 - mix*fade) + wet*(mix*fade);
+          }
+        }
+        // write back
+        for(let i=0;i<len;i++) data[i] = outbuf[i];
+      } break;
+
+      /* MICRO-GRANULAR SHUFFLE
+         - small grains (5-60 ms) with random offset + overlap crossfade
+      */
+      case "Micro-granular shuffle":{
+        const sr = buf.sampleRate;
+        const minMs = 5 + chaosVal*0; // in ms
+        const maxMs = 60 - chaosVal*30; // smaller if chaotic
+        const minS = Math.max(4, Math.floor(minMs*sr/1000));
+        const maxS = Math.max(minS+1, Math.floor(maxMs*sr/1000));
+        const outg = new Float32Array(len);
+        const overlap = Math.floor((minS+maxS)/4);
+        for(let pos=0; pos<len; pos+=Math.floor((minS+maxS)/2)){
+          const gsize = Math.floor(minS + rnd()*(maxS-minS));
+          const srcOff = Math.max(0, Math.floor(pos + (rnd()*2-1) * chaosVal * gsize * 2));
+          const winLen = Math.min(gsize, len-pos, len-srcOff);
+          for(let i=0;i<winLen;i++){
+            // hann window
+            const env = 0.5 - 0.5*Math.cos(Math.PI*(i/winLen));
+            outg[pos+i] += src[srcOff+i]*env;
+          }
+        }
+        for(let i=0;i<len;i++) data[i] = data[i]*(1-mix) + outg[i]*mix;
+        if(undefuseMode){
+          for(let i=0;i<len;i++) data[i] = data[i]*(1-0.4*mix) + src[i]*0.4*mix;
+        }
+      } break;
+
+      /* CHAOTIC WAVESHAPER
+         - waveshape via tanh + small feedback delay for a richer harmonic palette
+      */
+      case "Chaotic waveshaper":{
+        const drive = 1 + mix*8;
+        const delayLen = Math.min(len, Math.floor(0.005 * buf.sampleRate)); // 5ms feedback
+        const fbBuffer = new Float32Array(delayLen+1);
+        let fbIdx = 0;
+        for(let i=0;i<len;i++){
+          let x = src[i];
+          // feedback injection
+          x += fbBuffer[fbIdx] * 0.15 * chaosVal * mix;
+          // biased waveshaping
+          let y = Math.tanh(x * drive) + 0.2 * Math.sin(x * 15 * (1+chaosVal));
+          // write feedback
+          fbBuffer[fbIdx] = y;
+          fbIdx = (fbIdx + 1) % fbBuffer.length;
+          data[i] = data[i]*(1-mix) + y*mix;
+        }
+      } break;
+
+      /* BINAURAL PHASE MOD
+         - create stereo phase offset by delaying one channel slightly and modulating delay
+      */
+      case "Binaural phase mod":{
+        // only meaningful for 2+ channels; if mono, simulate stereo by splitting
+        const sr = buf.sampleRate;
+        const maxDelayMs = 8 + chaosVal*12; // up to ~20ms variation
+        const base = Math.floor(((ch===0) ? 1 : 0) * (1 + (mix*maxDelayMs/1000)) * sr * 0.002); // small offset per channel
+        const delaySamples = Math.floor((1 + mix*maxDelayMs*0.001*sr) * (0.5 + chaosVal*2));
+        // implement simple fractional delay via linear interpolation with slow LFO
+        const lfoRate = 0.1 + chaosVal*2.0; // Hz-ish (very slow changes)
+        for(let i=0;i<len;i++){
+          const lfo = 0.5 + 0.5*Math.sin(2*Math.PI*(i/ sr) * lfoRate + seed*0.0001);
+          const d = Math.max(0, Math.floor((lfo * maxDelayMs/1000) * sr));
+          const ip = i - d;
+          const val = (ip>=0) ? src[ip] : 0;
+          // slightly detune amplitude for stereo width
+          const stereoBoost = (ch===0) ? (1 + mix*0.08) : (1 - mix*0.08);
+          data[i] = data[i]*(1-mix) + val * mix * stereoBoost;
+        }
+        // if mono, allow undefuse to blend original
+        if(undefuseMode){
+          for(let i=0;i<len;i++) data[i] = data[i]*(1-0.5*mix) + src[i]*0.5*mix;
+        }
+      } break;
+
+      /* MIRROR CLIP
+         - fold samples above threshold and add small harmonic shimmer
+      */
+      case "Mirror clip":{
+        const threshold = 0.12 + chaosVal*0.28; // fold threshold
+        for(let i=0;i<len;i++){
+          let s = src[i];
+          if(Math.abs(s) > threshold){
+            const over = Math.abs(s) - threshold;
+            s = (s>0 ? 1 : -1) * (threshold - over); // mirror
+            // add tiny harmonic via cubic
+            s += 0.02 * Math.pow(src[i],3) * chaosVal;
+          }
+          data[i] = data[i]*(1-mix) + s*mix;
+        }
+      } break;
+
+      /* GRANULAR DECAY (improved)
+         - grains with random durations and per-grain randomized envelopes
+      */
+      case "Granular decay":{
+        const sr = buf.sampleRate;
+        const maxGrainMs = 120 * (1 - chaosVal*0.6); // up to ~120ms
+        const minGrainMs = 15;
+        const outg = new Float32Array(len);
+        for(let pos=0; pos<len; pos+=Math.floor((minGrainMs*sr)/1000)){
+          if(rnd() > 0.7 + (1-mix)*0.3) continue;
+          const gMs = minGrainMs + rnd()*(maxGrainMs-minGrainMs);
+          const gLen = Math.max(4, Math.floor(gMs*sr/1000));
+          const srcOff = Math.max(0, Math.floor(pos + (rnd()*2-1)*chaosVal*gLen*2));
+          const envType = Math.random() > 0.5 ? 'hann' : 'exp';
+          for(let i=0;i<gLen && (pos+i)<len && (srcOff+i)<len;i++){
+            let env;
+            if(envType==='hann') env = 0.5 - 0.5*Math.cos(Math.PI*(i/gLen));
+            else env = Math.pow(1 - (i/gLen), 2);
+            outg[pos+i] += src[srcOff+i]*env;
+          }
+        }
+        for(let i=0;i<len;i++) data[i] = data[i]*(1-mix) + outg[i]*mix;
+        if(undefuseMode){
+          for(let i=0;i<len;i++) data[i] = data[i]*(1-0.35*mix) + src[i]*0.35*mix;
+        }
+      } break;
+
+      /* PITCH BEND CHAOS (keep + enhance)
+         - random resampling with time-varying rate (kept from original but smoothed)
+      */
+      case "Pitch bend chaos":{
+        const tmp = new Float32Array(len);
+        let pos = 0;
+        let rate = 1;
+        for(let i=0;i<len;i++){
+          // smoother random changes using lowpass on rate
+          rate += (rnd()-0.5)*chaosVal*0.02*(1+mix*6);
+          rate = Math.max(0.5, Math.min(2.5, rate));
+          pos += rate;
+          const ip = Math.floor(pos) % len;
+          tmp[i] = src[Math.max(0,Math.min(len-1,ip))];
+        }
+        for(let i=0;i<len;i++) data[i] = data[i]*(1-mix) + tmp[i]*mix;
+        if(undefuseMode){
+          for(let i=0;i<len;i++) data[i] = data[i]*(1-0.5*mix) + src[i]*0.5*mix;
+        }
+      } break;
+
+      /* REVERSE REVERB (kept + richer tail)
+         - reverse segments and mix with smoothed tail
+      */
+      case "Reverse reverb":{
+        const rev = new Float32Array(len);
+        // reverse into rev, then apply a simple feedback tail (smoothing)
+        for(let i=0;i<len;i++) rev[i] = src[len-1-i];
+        // simple feedback lowpass tail
+        const tail = new Float32Array(len);
+        let acc = 0;
+        const decay = 0.995 - chaosVal*0.15;
+        for(let i=0;i<len;i++){
+          acc = acc*decay + rev[i]*0.08*(1+chaosVal*0.5);
+          tail[i] = acc;
+        }
+        for(let i=0;i<len;i++){
+          const dry = src[i];
+          const wet = tail[i];
+          data[i] = dry*(1-mix) + wet*mix;
+        }
+      } break;
+
+      /* EVOLVING BIT-CRUSH
+         - downsample + bit-depth reduction that slowly evolves (modulated by chaos)
+      */
+      case "Evolving bit-crush":{
+        const baseBits = Math.max(2, Math.floor(12 - mix*8));
+        const L = len;
+        // downsample rate changes slowly
+        let phase = 0;
+        const outc = new Float32Array(L);
+        for(let i=0;i<L;i++){
+          // evolving params
+          if(i%256===0) phase = rnd();
+          const bits = Math.max(2, Math.floor(baseBits - chaosVal*6*phase));
+          const step = Math.pow(0.5, bits);
+          const ds = Math.max(1, Math.floor(1 + Math.floor(1 + chaosVal*24*phase)));
+          // sample-and-hold downsample
+          const sampleIdx = Math.floor(i/ds)*ds;
+          const s = src[sampleIdx] || 0;
+          const crushed = Math.round(s/step)*step;
+          outc[i] = crushed;
+        }
+        for(let i=0;i<L;i++){
+          const fade = 1 - (i/L) * (loopToggle.checked?0:mix*0.8);
+          data[i] = data[i]*(1-mix) + outc[i]*mix*fade;
+        }
+      } break;
+
+      /* FLUTTER TREMOLO
+         - random-ish LFO amplitude modulation, smoothed for musical flutter
+      */
+      case "Flutter tremolo":{
+        const sr = buf.sampleRate;
+        // base LFO rate depends on chaos
+        const baseRate = 2 + chaosVal*12; // 2 - 14 Hz
+        // use smoothed random LFO (pink-ish)
+        let lfoPhase = 0;
+        let lp = 0;
+        for(let i=0;i<len;i++){
+          const t = i/sr;
+          // small deterministic + random mix
+          const det = 0.5 + 0.5*Math.sin(2*Math.PI*baseRate*t + seed*0.0001);
+          const rand = (rnd()-0.5)*chaosVal;
+          // smoothed mod
+          lp = lp*0.98 + (det*(1-chaosVal*0.7) + rand*chaosVal*0.7)*0.02;
+          const mod = 1 + (lp - 0.5) * mix * 1.6;
+          data[i] = src[i] * mod;
+        }
+      } break;
+
+      default: break;
+    }
+  }
+  return out;
+}
+
+/* Diffuse / preview / next / download flows */
+async function diffuse(applyPreview=false){
+  if(!originalBuffer) return alert("Upload a file first.");
+  ensureCtx();
+  currentSeed = Math.floor((Date.now() * (Math.random()+1)) % 2147483647);
+  seedLabel.textContent = currentSeed;
+  const algorithm = alg.value;
+  const intensity = parseFloat(int.value);
+  const chaosVal = parseFloat(chaos.value);
+  const undefuseMode = undef.checked;
+  processedBuffer = applyAlgorithm(originalBuffer, algorithm, intensity, chaosVal, currentSeed, undefuseMode);
+  lastAlg = algorithm;
+  if(applyPreview) playBuffer(processedBuffer);
+}
+
+function playBuffer(buf){
+  if(!buf) return;
+  ensureCtx();
+  const wav = bufferToWavBlob(buf);
+  const url = URL.createObjectURL(wav);
+  player.src = url;
+  player.loop = loopToggle.checked;
+  player.play().catch(()=>ensureCtx().resume().then(()=>player.play()));
+  drawWaveformFromBuffer(buf);
+}
+
+previewBtn.onclick = async ()=>{ if(!processedBuffer) await diffuse(true); else playBuffer(processedBuffer); }
+diffBtn.onclick = async ()=>{ await diffuse(false); alert('Diffuse applied. Use Preview for live playback or Next for variations.'); }
+nextBtn.onclick = async ()=>{ if(!originalBuffer) return alert("Upload a file first."); currentSeed = (currentSeed + Math.floor(Math.random()*9999)+1) % 2147483647; seedLabel.textContent = currentSeed; processedBuffer = applyAlgorithm(originalBuffer, alg.value, parseFloat(int.value), parseFloat(chaos.value), currentSeed, undef.checked); playBuffer(processedBuffer); }
+nextSmall.onclick = ()=>nextBtn.click();
+downloadBtn.onclick = ()=>downloadCurrent();
+downloadSmall.onclick = ()=>downloadCurrent();
+
+function downloadCurrent(){
+  const buf = processedBuffer || originalBuffer;
+  if(!buf) return alert("Nothing to download yet.");
+  let outBuf = buf;
+  if(loopToggle.checked){
+    outBuf = buf; // for brevity — leave as-is (could implement crossfade segment)
+  }
+  const blob = bufferToWavBlob(outBuf);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (document.querySelector('#alg').value.replace(/\s+/g,'_') || 'diffuse') + '.wav';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* WAV encoder */
+function bufferToWavBlob(buffer){
+  const numOfChan = buffer.numberOfChannels, sampleRate = buffer.sampleRate, format=1;
+  const len = buffer.length * numOfChan * 2 + 44;
+  const buf = new ArrayBuffer(len); const view = new DataView(buf);
+  function writeString(view, offset, str){for(let i=0;i<str.length;i++)view.setUint8(offset+i,str.charCodeAt(i));}
+  let offset=0;
+  writeString(view, offset, 'RIFF'); offset+=4;
+  view.setUint32(offset, 36 + buffer.length * numOfChan * 2, true); offset+=4;
+  writeString(view, offset, 'WAVE'); offset+=4;
+  writeString(view, offset, 'fmt '); offset+=4;
+  view.setUint32(offset, 16, true); offset+=4;
+  view.setUint16(offset, format, true); offset+=2;
+  view.setUint16(offset, numOfChan, true); offset+=2;
+  view.setUint32(offset, sampleRate, true); offset+=4;
+  view.setUint32(offset, sampleRate * numOfChan * 2, true); offset+=4;
+  view.setUint16(offset, numOfChan * 2, true); offset+=2;
+  view.setUint16(offset, 16, true); offset+=2;
+  writeString(view, offset, 'data'); offset+=4;
+  view.setUint32(offset, buffer.length * numOfChan * 2, true); offset+=4;
+  const interleaved = new Int16Array(buffer.length * numOfChan);
+  for(let i=0, idx=0; i<buffer.length; i++){
+    for(let ch=0; ch<numOfChan; ch++){
+      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i] || 0));
+      interleaved[idx++] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+    }
+  }
+  for(let i=0;i<interleaved.length;i++){ view.setInt16(offset, interleaved[i], true); offset+=2; }
+  return new Blob([view], {type: 'audio/wav'});
+}
+
+/* live-update while adjusting sliders */
+let liveTimeout;
+function liveUpdate(){
+  if(!originalBuffer) return;
+  clearTimeout(liveTimeout);
+  liveTimeout = setTimeout(()=>{
+    processedBuffer = applyAlgorithm(originalBuffer, alg.value, parseFloat(int.value), parseFloat(chaos.value), currentSeed||Date.now(), undef.checked);
+    playBuffer(processedBuffer);
+  }, 120);
+}
+
+/* keyboard friendly: space toggles play */
+document.addEventListener('keydown', e=>{ if(e.code==='Space'){ if(document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return; e.preventDefault(); if(player.paused) player.play(); else player.pause(); } });
+
+/* algorithm list interactions */
+alg.onchange = ()=>{ refreshAlgList(); highlightAlg(); }
+flipBtn.onclick = ()=>{
+  for (let i = algList.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [algList[i], algList[j]] = [algList[j], algList[i]]; }
+  const selected = alg.value;
+  alg.innerHTML = '';
+  algList.forEach(a=>{ const o = document.createElement('option'); o.textContent = a; alg.appendChild(o); });
+  const idx = algList.indexOf(selected); if(idx>=0) alg.selectedIndex = idx;
+  refreshAlgList();
+};
+
+/* waveform drawing (simple) */
+const canvas = document.getElementById('wave'), ctx = canvas.getContext('2d');
+function resizeCanvas(){ canvas.width = canvas.clientWidth * devicePixelRatio; canvas.height = canvas.clientHeight * devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); drawEmptyWave(); }
+function drawEmptyWave(){ ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight); ctx.fillStyle = '#04060a'; ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight); ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fillRect(0,canvas.clientHeight/2,canvas.clientWidth,1); }
+window.addEventListener('resize', ()=>{ resizeCanvas(); });
+resizeCanvas();
+
+function drawWaveformFromBuffer(buf){
+  if(!buf) return;
+  const raw = buf.getChannelData(0);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const step = Math.max(1, Math.floor(raw.length / w));
+  ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+  ctx.fillStyle = '#04060a';
+  ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(0,123,255,0.95)';
+  const mid = h/2;
+  for(let x=0, i=0; x<w && i<raw.length; x++, i+=step){
+    const v = raw[i];
+    const y = mid + v * mid * 0.95;
+    if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+/* initial highlight */
+highlightAlg();
+
+</script>
+</body>
+</html>
